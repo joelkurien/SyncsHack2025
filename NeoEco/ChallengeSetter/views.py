@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import requests
+import json
 
 # Create your views here.
 def index(request):
@@ -27,9 +28,7 @@ def getLatLong(location):
     except Exception as e:
         return None 
 
-import requests
-import json
-import re
+
 
 def search_opportunities(location=None):
     """
