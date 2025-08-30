@@ -1,16 +1,18 @@
 import { useState } from "react";
 import "./Dashboard.css"
 
-export default function Toolbar(){
+export default function Toolbar({ onNavigate }){
 
-    const [user, setUser] = useState("User");
+    const [user, setUser] = useState("Username");
 
     return (
         <header className="toolbar">
-            <div className="left">{user}</div>
+            <div className="left">Hi, {user}</div>
+
             <div className="right">
-                <a href="/profile">Profile</a>
-                <a href="/logout">Logout</a>
+                <button onClick={() => onNavigate("friends")}>Friends</button>
+                <button onClick={() => onNavigate("profile")}>Profile</button>
+                <button onClick={() => onNavigate("login")}>Logout</button>
             </div>
 
         </header>

@@ -1,0 +1,62 @@
+.friends {
+  position: fixed;   /* pin to viewport */
+  inset: 0;          /* top:0; right:0; bottom:0; left:0 */
+
+  background-image: url(../assets/background4.png);
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+th, td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.add-friend input {
+  margin-right: 0.5rem;
+}
+
+
+
+
+.boxd {
+     width: 500px;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  text-align: center;
+}
+
+.fontstyle1{
+    font-size: 25px;
+    color: black;
+
+}
+
+.fontstyle2{
+    font-size: 18px;
+    color: black;
+}
+
+.btne{
+    background-color: crimson;
+}
+
+.buttonf{
+    margin-top: 20px;
+}

@@ -1,0 +1,52 @@
+.Design {
+  position: fixed;   /* pin to viewport */
+  inset: 0;          /* top:0; right:0; bottom:0; left:0 */
+
+  background-image: url(../assets/background4.png);
+  background-position: center;
+  background-size: 100% 100%;
+  background-attachment: fixed;
+
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+
+
+.boxb {
+  width: 500px;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  background-size: 100% 100%;
+  overflow: hidden;
+  align-self: center;
+}
+.label1{
+    width: 45%; /* or tweak as needed */
+  text-align: left;
+  font-size: 20px;
+  color: black;
+}
+.label2{
+    width: 45%; /* or tweak as needed */
+  text-align: left;
+  font-size: 20px;
+  color: black;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between; 
+  width: 100%; 
+}
+
+
+.buttonf{
+    margin-top: 40px;
+}

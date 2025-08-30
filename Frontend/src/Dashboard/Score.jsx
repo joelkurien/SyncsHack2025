@@ -1,13 +1,17 @@
 import "./Dashboard.css"
 
+import Bronze from "../assets/Bronze.jpg";
+import Silver from "../assets/Silver.jpg";
+import Gold from "../assets/Gold.jpg";
+import Master from "../assets/Master.jpg";
+
 
 export default function Score(){
 
-
+const images = { Bronze, Silver, Gold, Master };
 
     const stat = {
-        pic: "../assets/profile.webp",
-        skill: "Bronze",
+        skill: "Silver",
         xp: 7,
         level: 1
     };
@@ -25,7 +29,9 @@ export default function Score(){
 
         <div className="score-left">
             <div className="first-row">
-            <img className="level-image" src ={stat.pic}></img>
+            <img 
+            className="level-image" 
+            src={images[stat.skill]}/>
            <p>{stat.skill}</p>
             </div>
             <p>XP : {stat.xp}</p>

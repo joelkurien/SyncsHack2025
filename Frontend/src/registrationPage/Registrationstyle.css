@@ -1,0 +1,35 @@
+.registration {
+  position: fixed;   /* pin to viewport */
+  inset: 0;          /* top:0; right:0; bottom:0; left:0 */
+
+  background-image: url(../assets/background4.png);
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.boxc {
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  text-align: center;
+}
+
+
+.inputDesignb{
+  border-radius: 10px;
+    
+  width: 90%;
+  height: 5vh;
+  margin-bottom: 10px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
