@@ -16,7 +16,7 @@ import asyncio, httpx
 import os
 from dotenv import load_dotenv
 import json
-from .models import User
+from .models import Group, User
 
 load_dotenv("./content.env")
 
@@ -32,27 +32,31 @@ def index(request):
 
 @api_view(['POST'])
 def register_user(request):
-    username = request.data.get("username")
-    password = request.data.get("password")
-    email = request.data.get("email")
-    address = request.data.get("address1")
-    work_address = request.data.get("address2")
+    try:
+        username = request.data.get("username")
+        password = request.data.get("password")
+        email = request.data.get("email")
+        address = request.data.get("address1")
+        work_address = request.data.get("address2")
 
-    if not username or not password:
-        return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not username or not password:
+            return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create(
-        username=username,
-        email=email,
-        password=password,  # important: never store raw passwords
-        address = address,
-        work_address = address
-    )
+        user = User.objects.create(
+            username=username,
+            email=email,
+            password=password,  # important: never store raw passwords
+            address = address,
+            work_address = work_address
+        )
 
-    return Response({"message": "User created successfully", "user_id": user.id}, status=status.HTTP_201_CREATED)
+        return Response({"message": "User created successfully", "user_id": user.id}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        print(e)
+        return Response(e)
 
 @api_view(['POST'])
 def user_login(request):
@@ -339,6 +343,7 @@ def complete_quest(request):
 
     time.sleep(5)
     currentUser.quest_completed = True
+    
     currentUser.save()
     
     return Response({
@@ -389,3 +394,52 @@ def get_user_stats(user):
         "last_login": user.last_login
     }
 
+@api_view(['POST'])
+def addFriend(request):
+    try:
+        friend_username = request.data.get("friend_username")
+        try:
+            friend = User.objects.get(username=friend_username)
+        except User.DoesNotExist:
+            return Response({"error": "Friend Does not exist"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        user_groups = currentUser.custom_groups.all()
+        
+        if user_groups.exists():
+            group = user_groups.first()
+            group.members.add(friend)
+            friend_groups = friend.custom_groups.all()
+            if friend_groups.exists():
+                friend_group = friend_groups.first()
+                friend_group.members.add(currentUser)
+                return Response({
+                    "status": "success",
+                    "message": f"Added {friend_username} to your existing group.",
+                    "group_id": str(group.id)
+                })
+        else:
+            new_group = Group.objects.create()
+            new_group.members.add(currentUser, friend)
+            return Response({
+                "status": "success",
+                "message": f"Created a new group with {friend_username}.",
+                "group_id": str(new_group.id)
+            })
+            
+    except User.DoesNotExist:
+        return Response({"status": "error", "message": "One or both users not found."}, status=404)
+    except Exception as e:
+        return Response({"status": "error", "message": str(e)}, status=400)
+    
+@api_view(['GET'])
+def getFriends(request): 
+    friends = set()
+
+    for group in currentUser.custom_groups.all():
+        for member in group.members.all():
+            if member != currentUser:
+                friends.add(member.username)
+
+    return Response({
+        "friends": list(friends)
+    })
