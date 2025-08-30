@@ -30,7 +30,7 @@ def decideTransportOperation(request):
         return Response({"decision": "take a car"})
 
 async def decideTransportOperationAsync(home, target):
-    async with httpx.AsyncClient(timeout=15) as client:
+    async with httpx.AsyncClient(timeout=8) as client:
         startLocation = await getLatLong(client, home)
         targetLocation = await getLatLong(client, target)
         if not startLocation or not targetLocation:
@@ -59,7 +59,7 @@ async def decideTransportOperationAsync(home, target):
                         take a train based on the data provided: {decisionParameters} - give the answer in one word'''
             
             groqPayload ={
-                "model": "llama-3.3-70b-versatile",
+                "model": os.getenv("GROQ_MODEL"),
                 "messages": [
                     {
                         "role": "user",
