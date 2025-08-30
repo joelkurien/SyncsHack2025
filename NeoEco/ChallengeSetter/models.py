@@ -20,15 +20,17 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=50, unique=True)
+    password = models.CharField(max_length=50)
     email = models.EmailField(max_length=255, unique=True)
     eco_rank = models.CharField(max_length=20, default='Bronze')
     xp = models.PositiveIntegerField(default=0)
     level = models.PositiveIntegerField(default=1)
     avatar_choice = models.CharField(max_length=100, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
-    last_login = models.DateTimeField(blank=True, null=True)
+    address = models.CharField(max_length=1000, default="Sydney")
+    work_address = models.CharField(max_length=1000, default="Sydney")
 
     objects = UserManager()
 

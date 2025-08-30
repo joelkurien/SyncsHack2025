@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 import requests
 import pandas as pd
 import math
@@ -9,6 +13,7 @@ import asyncio, httpx
 import os
 from dotenv import load_dotenv
 import json
+from .models import User
 
 load_dotenv("./content.env")
 
@@ -19,6 +24,60 @@ TRAFFIC_API = os.getenv("TRAFFIC_KEY")
 # Create your views here.
 def index(request):
     return HttpResponse("Hello World")
+
+@api_view(['POST'])
+def register_user(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+    email = request.data.get("email")
+    address = request.data.get("address1")
+    work_address = request.data.get("address2")
+
+    if not username or not password:
+        return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(username=username).exists():
+        return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.create(
+        username=username,
+        email=email,
+        password=password,  # important: never store raw passwords
+        address = address,
+        work_address = address
+    )
+
+    return Response({"message": "User created successfully", "user_id": user.id}, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+def user_login(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+    if not username or not password:
+        return Response({"error": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({"error": "Wrong Username"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if user.check_password(password):
+        return Response({"error": "Wrong Password"}, status=status.HTTP_401_UNAUTHORIZED)
+    token, created = Token.objects.get_or_create(user=user)
+
+    return Response({
+        "message": "Login successful",
+        "token": token.key,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "eco_rank": user.eco_rank,
+            "xp": user.xp,
+            "level": user.level,
+            "avatar_choice": user.avatar_choice,
+        }
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def decideTransportOperation(request):
@@ -108,58 +167,136 @@ async def getLatLong(client, location):
     except Exception as e:
         return None 
 
+async def weatherCondition(client, lat, long):
+    try:
+        weatherUrl = f"https://api.weatherbit.io/v2.0/current?lat={lat}&lon={long}&key={WEATHER_API}"
+        response = await client.get(weatherUrl)
+        data = response.json()
 
+        if "data" in data:
+            weather = data["data"][0]
+            temperature = weather["temp"]          
+            description = weather["weather"]["description"]
+            wind_speed = weather["wind_spd"]       
+            humidity = weather["rh"]              
+            
+            return [f"{temperature}%C", f"{humidity}%", description, f"{wind_speed} m/s"]
+        raise ValueError("Weather data is not Found")       
+        
+    except Exception as e:
+        print("Weather Break")
+        return None
 
+def distanceBetweenLocations(startLocation, endLocation):
+    startLon = math.radians(startLocation[1])
+    endLon = math.radians(endLocation[1])
+    startLat = math.radians(startLocation[0])
+    endLat = math.radians(endLocation[0])
+    lonDiff = endLon - startLon 
+    latDiff = endLat - startLat
+    val = math.sin(latDiff / 2)**2 + math.cos(startLat) * math.cos(endLat) * math.sin(lonDiff / 2)**2
+
+    c = 2 * math.asin(math.sqrt(val)) 
+    r = 6371
+    return (c * r)
+
+async def getTrafficCondition(client, startLocation, endLocation):
+    try:
+        routingUrl = f"https://api.tomtom.com/routing/1/calculateRoute/{startLocation[0]},{startLocation[1]}:{endLocation[0]},{endLocation[1]}/json"
+        params = {"traffic": 'true', "key": TRAFFIC_API}
+        
+        routeResp = await client.get(routingUrl, params=params)
+        data = routeResp.json()
+        
+        if "routes" not in data or len(data['routes']) == 0:
+            raise ValueError("No route present")
+        
+        route = data['routes'][0]
+        points = None
+        for leg in route.get("legs", []):
+            for point in leg.get("points", []):
+                points = (point['latitude'], point['longitude'])
+        
+        if not points:
+            raise ValueError("Location is not valid")
+        
+        flowSegUrl =f"https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={points[0]},{points[1]}&key={TRAFFIC_API}"
+        flowSegResp = await client.get(flowSegUrl)
+        data = flowSegResp.json()
+        
+        flowData = []
+        if "flowSegmentData" in data:
+            flow = data["flowSegmentData"]
+            flowData.append({
+                "current_speed": flow.get("currentSpeed", None),
+                "free_flow_speed": flow.get("freeFlowSpeed", None)
+            })
+
+        if not flowData:
+            raise ValueError("There is no flow traffic data available")
+        
+        flowDf = pd.DataFrame(flowData)
+
+        avgCurrentSpeed = flowDf["current_speed"].mean()
+        avgFreeFlowSpeed = flowDf["free_flow_speed"].mean()
+
+        return [avgCurrentSpeed, avgFreeFlowSpeed]
+    except Exception as e:
+        print("Traffic Break")
+        return None
+    
+@api_view(['GET'])
 def search_opportunities(location=None):
-    """
-    Searches the VolunteerConnector API for volunteer opportunities related to "environment"
-    and a specific location, and then prints the details of the jobs found.
-
-    Args:
-        location (str, optional): A city or postal code to filter by location.
-    """
     
     API_ENDPOINT = 'https://www.volunteerconnector.org/api/search/'
-    
-    # We will search broadly for "environment" and combine it with the location
     final_query = 'environment'
     if location:
         final_query += f' {location}'
 
     params = {'q': final_query}
-
-    print(f"Searching for all '{final_query}' opportunities...")
-    print("-" * 60)
-
     try:
         response = requests.get(API_ENDPOINT, params=params)
-        response.raise_for_status()  # Raises an HTTPError if the response status code is 4xx or 5xx
+        response.raise_for_status()  
 
         data = response.json()
 
+        volunteerTasks = []
         if data.get('results'):
-            print("Volunteer opportunities found:")
-            print("-" * 60)
             for opportunity in data['results']:
-                title = opportunity.get('title', 'No Title Provided')
-                organization_name = opportunity.get('organization', {}).get('name', 'Unknown Organization')
-                url = opportunity.get('url', 'No URL available')
                 description = opportunity.get('description', 'No description available.')
-                
-                print(f"Title: {title}")
-                print(f"Organization: {organization_name}")
-                print(f"URL: {url}")
-                print(f"Description: {description[:150]}...")  # Truncate description for readability
-                print("-" * 60)
+                url = opportunity.get('url', 'No URL available')
+                volunteer = {
+                    "title": opportunity.get('title', 'No Title Provided'),
+                    "orgName": opportunity.get('organization', {}).get('name', 'Unknown Organization'),
+                    "url": url,
+                    "description": f"{description[:50]}... More Info at {url}"
+                }
+                volunteerTasks.append(volunteer)
         else:
-            print("No volunteer opportunities found with that search criteria.")
+            raise ValueError("No volunteer opportunities found with that search criteria.")
+        return Response({
+            "type":"volunteer_quests",
+            "results": volunteerTasks
+        })
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
+        return Response({
+            "type":"volunteer_quests",
+            "results": []
+        })
     except json.JSONDecodeError:
         print("Failed to decode JSON response from the API.")
+        return Response({
+            "type":"volunteer_quests",
+            "results": []
+        })
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        return Response({
+            "type":"volunteer_quests",
+            "results": []
+        })
 
 
 SKILL_TREE = [
@@ -250,80 +387,3 @@ def get_user_stats(user):
         "last_login": user.last_login
     }
 
-def distanceBetweenLocations(startLocation, endLocation):
-    startLon = math.radians(startLocation[1])
-    endLon = math.radians(endLocation[1])
-    startLat = math.radians(startLocation[0])
-    endLat = math.radians(endLocation[0])
-    lonDiff = endLon - startLon 
-    latDiff = endLat - startLat
-    val = math.sin(latDiff / 2)**2 + math.cos(startLat) * math.cos(endLat) * math.sin(lonDiff / 2)**2
-
-    c = 2 * math.asin(math.sqrt(val)) 
-    r = 6371
-    return (c * r)
-
-async def getTrafficCondition(client, startLocation, endLocation):
-    try:
-        routingUrl = f"https://api.tomtom.com/routing/1/calculateRoute/{startLocation[0]},{startLocation[1]}:{endLocation[0]},{endLocation[1]}/json"
-        params = {"traffic": 'true', "key": TRAFFIC_API}
-        
-        routeResp = await client.get(routingUrl, params=params)
-        data = routeResp.json()
-        
-        if "routes" not in data or len(data['routes']) == 0:
-            raise ValueError("No route present")
-        
-        route = data['routes'][0]
-        points = None
-        for leg in route.get("legs", []):
-            for point in leg.get("points", []):
-                points = (point['latitude'], point['longitude'])
-        
-        if not points:
-            raise ValueError("Location is not valid")
-        
-        flowSegUrl =f"https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={points[0]},{points[1]}&key={TRAFFIC_API}"
-        flowSegResp = await client.get(flowSegUrl)
-        data = flowSegResp.json()
-        
-        flowData = []
-        if "flowSegmentData" in data:
-            flow = data["flowSegmentData"]
-            flowData.append({
-                "current_speed": flow.get("currentSpeed", None),
-                "free_flow_speed": flow.get("freeFlowSpeed", None)
-            })
-
-        if not flowData:
-            raise ValueError("There is no flow traffic data available")
-        
-        flowDf = pd.DataFrame(flowData)
-
-        avgCurrentSpeed = flowDf["current_speed"].mean()
-        avgFreeFlowSpeed = flowDf["free_flow_speed"].mean()
-
-        return [avgCurrentSpeed, avgFreeFlowSpeed]
-    except Exception as e:
-        print("Traffic Break")
-        return None
-    
-async def weatherCondition(client, lat, long):
-    try:
-        weatherUrl = f"https://api.weatherbit.io/v2.0/current?lat={lat}&lon={long}&key={WEATHER_API}"
-        response = await client.get(weatherUrl)
-        data = response.json()
-
-        if "data" in data:
-            weather = data["data"][0]
-            temperature = weather["temp"]          
-            description = weather["weather"]["description"]
-            wind_speed = weather["wind_spd"]       
-            humidity = weather["rh"]              
-            
-            return [f"{temperature}%C", f"{humidity}%", description, f"{wind_speed} m/s"]
-        raise ValueError("Weather data is not Found")       
-        
-    except Exception as e:
-        print("Weather Break")
-        return None
