@@ -36,6 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     quest_file_name = models.CharField(max_length=255, blank=True, null=True, help_text="Name of the uploaded file")
     rank = models.CharField(max_length=255, default = 0, null = False)
     objects = UserManager()
+    level = models.PositiveIntegerField(default=0)
 
     USERNAME_FIELD = 'email'  
     REQUIRED_FIELDS = ['username']

@@ -308,7 +308,7 @@ def search_opportunities(location=None):
 SKILL_TREE = [
     {"name": "Daily Challenge Streak Bonus", "unlock_level": 5},
     {"name": "Double Points Weekend", "unlock_level": 10},
-    # Add more skills as needed
+    
 ]
 
 def grant_daily_streak_bonus(user):
@@ -339,13 +339,37 @@ def complete_quest(request):
 
     time.sleep(5)
     currentUser.quest_completed = True
+
+    # Continuous level system
+    currentUser.level = currentUser.xp // 50   # 1 level every 50 XP
+    if currentUser.level == 0:
+        currentUser.level = 1  # Ensure minimum level is 1
+
+    # Rank system (based on XP milestones)
+    if currentUser.xp < 250:
+        currentUser.rank = "Bronze"
+
+    elif currentUser.xp < 500:
+        currentUser.rank = "Silver"
+
+    elif currentUser.xp < 1000:
+        currentUser.rank = "Gold"
+
+    else:
+        currentUser.rank = "Amethyst"
+
+
     currentUser.save()
+
+
     
     return Response({
         "message": "File uploaded successfully",
         "xp_gain": xpGain,
         "new_xp": currentUser.xp,
-        "quest_id": currentUser.quest_id
+        "quest_id": currentUser.quest_id,
+        "new_rank": currentUser.rank,
+        "new_level": currentUser.level
     })
     
 def check_skill_unlocks(user):
