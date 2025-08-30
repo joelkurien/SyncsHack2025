@@ -1,0 +1,65 @@
+.login {
+
+  position: fixed;   /* pin to viewport */
+  inset: 0;          /* top:0; right:0; bottom:0; left:0 */
+
+  background-image: url(../assets/background3.png);
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.login-box {
+
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.15); 
+  backdrop-filter: blur(12px);
+
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+
+
+  width: 320px;
+  padding: 2rem;
+
+  color: #fff;
+  text-align: center;
+}
+
+.inputDesign {
+  width: 100%;          /* make input fill the container */
+  height: 50px;         /* increase height */
+  font-size: 1.1rem;    /* bigger text inside */
+  padding: 0.5rem 1rem; /* padding for spacing */
+  border: none;         /* remove default border */
+  border-radius: 8px;   /* rounded corners */
+  background-color: #2c2c2c; /* dark background */
+  color: white;         /* text color */
+}
+
+.login-textbox{
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.login-textbox input {
+  border: none;         
+  border-radius: 8px;
+  background-color: #2c2c2c;
+
+  padding: 0.5rem 1rem;
+  width: 90%;
+  height: 50px;
+  font-size: 1.1rem;
+
+  color: white;
+}
+.btna {
+  width: 103%;
+  margin-bottom: 10px;
+}
