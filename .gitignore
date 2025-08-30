@@ -1,1 +1,42 @@
 .vite/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+static/
+.env
+*.pot
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Migrations (optional, if you don't want to track them)
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# Cache
+*.cache
+content.env
