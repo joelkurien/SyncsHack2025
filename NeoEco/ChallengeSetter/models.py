@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
@@ -31,10 +32,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     address = models.CharField(max_length=1000, default="Sydney")
     work_address = models.CharField(max_length=1000, default="Sydney")
-    quest_id = models.CharField(max_length=500, blank=True, null=True, unique=True, help_text="ID of the currently active quest")
+    quest_id = models.IntegerField(default=0, blank=True, null=True, unique=True, help_text="ID of the currently active quest")
     quest_completed = models.BooleanField(default=False, help_text="Whether the current quest is completed")
     quest_file_name = models.CharField(max_length=255, blank=True, null=True, help_text="Name of the uploaded file")
-    rank = models.CharField(max_length=255, default = 0, null = False)
+    rank = models.CharField(max_length=255, default = "0", null = False)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'  
@@ -45,7 +46,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         # Auto-generate quest_id if not set
-        if not self.quest_id:
-            last_user = User.objects.order_by('-quest_id').first()
-            self.quest_id = last_user.quest_id + 1 if last_user and last_user.quest_id else 1
+        if self.quest_id is None:
+                last_user = User.objects.exclude(quest_id__isnull=True).order_by('-quest_id').first()
+                self.quest_id = (last_user.quest_id + 1) if last_user and last_user.quest_id is not None else 1
         super().save(*args, **kwargs)
+
+        
+class Group(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    members = models.ManyToManyField(User, related_name='custom_groups')
+
+    def __str__(self):
+        return f"Group {self.id}"
