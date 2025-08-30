@@ -1,30 +1,48 @@
-import "./Dashboard.css"
-
+// Score.jsx
+import React, { useEffect, useState } from "react";
+import "./Dashboard.css";
 import Bronze from "../assets/Bronze.jpg";
 import Silver from "../assets/Silver.jpg";
 import Gold from "../assets/Gold.jpg";
 import Master from "../assets/Master.jpg";
 
-
-export default function Score(){
-
 const images = { Bronze, Silver, Gold, Master };
 
-    const stat = {
-        skill: "Silver",
-        xp: 7,
-        level: 1
-    };
+function xpToLevel(xp) {
+  return Math.max(1, Math.floor((xp ?? 0) / 100) + 1);
+}
+function levelToSkill(level) {
+  if (level >= 10) return "Master";
+  if (level >= 7) return "Gold";
+  if (level >= 4) return "Silver";
+  return "Bronze";
+}
 
-    const leaderboard = [
-        { ppl: "Alice", points: 20 },
-        { ppl: "Bob", points: 22 },
-        { ppl: "Charlie", points: 18 }
-    ];
+export default function Score() {
+  const [stat, setStat] = useState({ skill: "Bronze", xp: 0, level: 1 });
+  const [leaderboard, setLeaderboard] = useState([]);
 
+  useEffect(() => {
+    async function load() {
+      // 1) Profile for current XP
+      const profileRes = await fetch("http://localhost:8000/user/profile");
+      const profile = await profileRes.json();
 
+      const level = xpToLevel(profile?.xp ?? 0);
+      const skill = levelToSkill(level);
 
-    return (
+      setStat({ xp: profile?.xp ?? 0, level, skill });
+
+      // 2) Leaderboard (friends)
+      const lbRes = await fetch("http://localhost:8000/user/leaderboard");
+      const lb = await lbRes.json();
+      setLeaderboard(lb?.leaderboard ?? []);
+    }
+
+    load().catch(console.error);
+  },[]);
+
+  return (
     <header className="score">
 
         <div className="score-left">
@@ -45,7 +63,7 @@ const images = { Bronze, Silver, Gold, Master };
             <tr><th>Name</th><th>XP</th></tr>
 
                 {leaderboard.slice(0, 3).map((leaderboard) => (
-                    <tr><td>{leaderboard.ppl}</td><td>{leaderboard.points}</td></tr>
+                    <tr><td>{leaderboard.username}</td><td>{leaderboard.xp}</td></tr>
                   ))}
 
 

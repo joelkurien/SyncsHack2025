@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './stylingProfile.css';
 
 function Profile({ onNavigate }) {
-  const username = "admin";
-  const email = "email@gmail.com"
-  const XP = "100";
-  const skill = "GOld";
-  const address1 = "glebe";
-  const address2 = "USYD";
-  const city = "SYDNEY";
-  const state = "NSW";
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+
+    fetch('http://localhost:8000/user/profile', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Failed to fetch profile');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setProfile(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div>Loading profile...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="Design">
@@ -17,35 +40,23 @@ function Profile({ onNavigate }) {
         <h1 style = {{color: 'black'}}> PROFILE</h1>
          <div className = 'label-row'>
           <label className='label1'>Username  :  </label>  
-         <label className='label2'> {username}  </label> 
+         <label className='label2'> {profile.username}  </label> 
          </div>
           <div className = 'label-row'>
           <label className='label1'>Email  :  </label>  
-         <label className='label2'> {email}  </label> 
+         <label className='label2'> {profile.email}  </label> 
          </div>
           <div className = 'label-row'>
           <label className='label1'>XP  :  </label>  
-         <label className='label2'> {XP}  </label> 
-         </div>
-          <div className = 'label-row'>
-          <label className='label1'>Skill  :  </label>  
-         <label className='label2'> {skill}  </label> 
+         <label className='label2'> {profile.xp}  </label> 
          </div>
           <div className = 'label-row'>
           <label className='label1'>Home address  :  </label>  
-         <label className='label2'> {address1}  </label> 
+         <label className='label2'> {profile.address}  </label> 
          </div>
           <div className = 'label-row'>
           <label className='label1'>Work Address  :  </label>  
-         <label className='label2'> {address2}  </label> 
-         </div>
-          <div className = 'label-row'>
-          <label className='label1'>City :  </label>  
-         <label className='label2'> {city}  </label> 
-         </div>
-          <div className = 'label-row'>
-          <label className='label1'>State  :  </label>  
-         <label className='label2'> {state}  </label> 
+         <label className='label2'> {profile.work_address}  </label> 
          </div>
          
         <div className="buttonf">

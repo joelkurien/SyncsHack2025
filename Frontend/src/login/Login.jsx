@@ -6,18 +6,44 @@ function Login({ onLoginSuccess, onNavigate }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-
+  const [loading, setLoading]   = useState(false);
   
-    if (username === 'a' && password === 'p') { //remove it later
-      setMessage('Login successful!');
-      if (onLoginSuccess) onLoginSuccess();
-     
-    } else {
-      setMessage('Invalid username or password.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setLoading(true);
+
+    try {
+      const resp = await fetch('http://localhost:8000/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // views.py expects { username, password } in request.data
+        body: JSON.stringify({ username, password }),
+      });
+
+      // Parse JSON whether 200 or an error
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        // Backend returns {"error": "..."} on failures
+        const msg = data?.error || 'Login failed';
+        setMessage(msg);
+      } else {
+        // On success, backend returns { message, token, user: {...} }
+        const { token, user } = data || {};
+        if (token) {
+          // Store token for subsequent authenticated calls
+          localStorage.setItem('authToken', token);
+        }
+        setMessage('Login successful!');
+        // Let parent know (if needed to redirect or load profile)
+        if (onLoginSuccess) onLoginSuccess({ token, user });
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setMessage('Unable to reach server. Please try again.');
+    } finally {
+      setLoading(false);
     }
 
   };
