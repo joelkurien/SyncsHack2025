@@ -89,10 +89,21 @@ def user_login(request):
         }
     }, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['GET'])
+def getUserProfile(request):
+    currentUser = User.objects.get(username  = 'joel12345')
+    return Response({
+        "username": currentUser.username,
+        "email": currentUser.email,
+        "xp": currentUser.xp,
+        "address": currentUser.address,
+        "work_address": currentUser.work_address
+    })
+
+@api_view(['GET'])
 def decideTransportOperation(request):
-    home = request.data.get("homeAddress")
-    target = request.data.get("targetAddress")
+    home = currentUser.address
+    target = currentUser.work_address
     result = asyncio.run(decideTransportOperationAsync(home, target))
     if result:
         return Response({"decision": result})
@@ -443,3 +454,23 @@ def getFriends(request):
     return Response({
         "friends": list(friends)
     })
+
+@api_view(['GET'])
+def getLeadboard(request):
+    currentUser = User.objects.get(username = 'joel12345')
+    friends = set()
+    for group in currentUser.custom_groups.all():
+        for member in group.members.all():
+            friends.add(member)
+    
+    legends = sorted(friends, key=lambda x: x.xp, reverse=True)[:3]
+    
+    leaderBoard = [
+            {
+                "username": friend.username,
+                "xp": friend.xp
+            }
+            for friend in legends
+        ]
+
+    return Response({"leaderboard": leaderBoard})

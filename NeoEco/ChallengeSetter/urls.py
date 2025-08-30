@@ -10,5 +10,7 @@ urlpatterns = [
     path("user/register", views.register_user, name="register_user"),
     path("user/login", views.user_login, name="user_login"),
     path("user/group", views.addFriend, name="addFriend"),
-    path("user/friends", views.getFriends, name="getFriends")
+    path("user/friends", views.getFriends, name="getFriends"),
+    path("user/leaderboard", views.getLeadboard, name="getLeadboard"),
+    path("user/profile", views.getUserProfile, name="getUserProfile")
 ]
