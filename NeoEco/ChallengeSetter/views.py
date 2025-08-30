@@ -319,25 +319,8 @@ def search_opportunities(location=None):
             "results": []
         })
 
-
-SKILL_TREE = [
-    {"name": "Daily Challenge Streak Bonus", "unlock_level": 5},
-    {"name": "Double Points Weekend", "unlock_level": 10},
-    # Add more skills as needed
-]
-
 def grant_daily_streak_bonus(user):
-    """
-    Grant XP bonus for daily challenge streaks if the user has unlocked the skill.
-    
-    Args:
-        user: User instance to grant bonus to
-    """
-    if user.level >= 5:  # Check if user has reached level 5 to unlock the skill
-        user.xp += 20
-        user.save()
-        return True
-    return False
+    pass
 
 @api_view(['POST'])
 def complete_quest(request):
