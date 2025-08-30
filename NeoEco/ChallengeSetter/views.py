@@ -6,6 +6,14 @@ import requests
 import pandas as pd
 import math
 import asyncio, httpx
+import os
+from dotenv import load_dotenv
+
+load_dotenv("./content.env")
+
+GROQ_API = os.getenv("GROQ_API")
+WEATHER_API = os.getenv("WEATHER_KEY")
+TRAFFIC_API = os.getenv("TRAFFIC_KEY")
 
 # Create your views here.
 def index(request):
@@ -16,7 +24,10 @@ def decideTransportOperation(request):
     home = request.data.get("homeAddress")
     target = request.data.get("targetAddress")
     result = asyncio.run(decideTransportOperationAsync(home, target))
-    return Response({"decision": result})
+    if result:
+        return Response({"decision": result})
+    else:
+        return Response({"decision": "take a car"})
 
 async def decideTransportOperationAsync(home, target):
     async with httpx.AsyncClient(timeout=15) as client:
@@ -25,8 +36,6 @@ async def decideTransportOperationAsync(home, target):
         if not startLocation or not targetLocation:
             return None
         distBtPts = distanceBetweenLocations(startLocation, targetLocation)
-        if distBtPts < 1:
-            return "walk"
         
         try:
             trafficCon = getTrafficCondition(client, startLocation, targetLocation)
@@ -58,13 +67,11 @@ async def decideTransportOperationAsync(home, target):
                     }
                 ]
             }
-
-            API_KEY = "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"
             
             groqUrl = "https://api.groq.com/openai/v1/chat/completions"
             groqHeaders = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {API_KEY}",
+                "Authorization": f"Bearer {GROQ_API}",
             }
 
             groqResp = requests.post(groqUrl, headers=groqHeaders, json=groqPayload, timeout=60)
@@ -75,14 +82,13 @@ async def decideTransportOperationAsync(home, target):
             content = data["choices"][0]["message"]["content"]
             responseJson = {
                 "responseTo": "type_of_transport",
-                "action": "content"
+                "action": content
             }
-            return Response(responseJson)
+            return responseJson
 
         except Exception as e:
-            print(e)
             print("error")
-            return Response(None)
+            return None
         
 
 async def getLatLong(client, location):
@@ -115,10 +121,9 @@ def distanceBetweenLocations(startLocation, endLocation):
     return (c * r)
 
 async def getTrafficCondition(client, startLocation, endLocation):
-    API_KEY = "fMSqTwDimzKTPjEoPgjWOmT2Ox3xr9Uv"
     try:
         routingUrl = f"https://api.tomtom.com/routing/1/calculateRoute/{startLocation[0]},{startLocation[1]}:{endLocation[0]},{endLocation[1]}/json"
-        params = {"traffic": 'true', "key": API_KEY}
+        params = {"traffic": 'true', "key": TRAFFIC_API}
         
         routeResp = await client.get(routingUrl, params=params)
         data = routeResp.json()
@@ -127,26 +132,25 @@ async def getTrafficCondition(client, startLocation, endLocation):
             raise ValueError("No route present")
         
         route = data['routes'][0]
-        points = []
+        points = None
         for leg in route.get("legs", []):
             for point in leg.get("points", []):
-                points.append((point['latitude'], point['longitude']))
+                points = (point['latitude'], point['longitude'])
         
         if not points:
             raise ValueError("Location is not valid")
         
+        flowSegUrl =f"https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={points[0]},{points[1]}&key={TRAFFIC_API}"
+        flowSegResp = await client.get(flowSegUrl)
+        data = flowSegResp.json()
+        
         flowData = []
-        for lat, long in points[::5]:
-            flowSegUrl =f"https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={lat},{long}&key={API_KEY}"
-            flowSegResp = requests.get(flowSegUrl)
-            data = flowSegResp.json()
-            
-            if "flowSegmentData" in data:
-                flow = data["flowSegmentData"]
-                flowData.append({
-                    "current_speed": flow.get("currentSpeed", None),
-                    "free_flow_speed": flow.get("freeFlowSpeed", None)
-                })
+        if "flowSegmentData" in data:
+            flow = data["flowSegmentData"]
+            flowData.append({
+                "current_speed": flow.get("currentSpeed", None),
+                "free_flow_speed": flow.get("freeFlowSpeed", None)
+            })
 
         if not flowData:
             raise ValueError("There is no flow traffic data available")
@@ -158,30 +162,25 @@ async def getTrafficCondition(client, startLocation, endLocation):
 
         return [avgCurrentSpeed, avgFreeFlowSpeed]
     except Exception as e:
-        print("x"+f"{e}")
         print("Traffic Break")
         return None
     
 async def weatherCondition(client, lat, long):
-    API_KEY = "27cda8e65bcb4b24bbc4a649fa097466"
-
     try:
-        # Weatherbit Current Weather API
-        weatherUrl = f"https://api.weatherbit.io/v2.0/current?lat={lat}&lon={long}&key={API_KEY}"
+        weatherUrl = f"https://api.weatherbit.io/v2.0/current?lat={lat}&lon={long}&key={WEATHER_API}"
         response = await client.get(weatherUrl)
         data = response.json()
 
         if "data" in data:
             weather = data["data"][0]
-            temperature = weather["temp"]          # Celsius
+            temperature = weather["temp"]          
             description = weather["weather"]["description"]
-            wind_speed = weather["wind_spd"]       # m/s
-            humidity = weather["rh"]               # %
+            wind_speed = weather["wind_spd"]       
+            humidity = weather["rh"]              
             
             return [f"{temperature}%C", f"{humidity}%", description, f"{wind_speed} m/s"]
         raise ValueError("Weather data is not Found")       
         
     except Exception as e:
-        print(e)
         print("Weather Break")
         return None
