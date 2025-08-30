@@ -1,6 +1,9 @@
+import random
+import time
 from django.shortcuts import render
 from django.http import HttpResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
@@ -20,6 +23,8 @@ load_dotenv("./content.env")
 GROQ_API = os.getenv("GROQ_API")
 WEATHER_API = os.getenv("WEATHER_KEY")
 TRAFFIC_API = os.getenv("TRAFFIC_KEY")
+
+currentUser = None
 
 # Create your views here.
 def index(request):
@@ -65,6 +70,7 @@ def user_login(request):
         return Response({"error": "Wrong Password"}, status=status.HTTP_401_UNAUTHORIZED)
     token, created = Token.objects.get_or_create(user=user)
 
+    currentUser = user
     return Response({
         "message": "Login successful",
         "token": token.key,
@@ -318,34 +324,30 @@ def grant_daily_streak_bonus(user):
         return True
     return False
 
-def xp_progress(user):
-    """
-    Calculate progress percentage to next level.
-    
-    Args:
-        user: User instance to calculate progress for
-        
-    Returns:
-        float: Progress percentage (0.0 to 1.0)
-    """
-    try:
-        # Define XP thresholds for levels (you can adjust these values)
-        level_thresholds = [0, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
-        
-        current_level = user.level
-        if current_level >= len(level_thresholds):
-            return 1.0  # Max level reached
-            
-        current_level_xp = level_thresholds[current_level - 1]
-        next_level_xp = level_thresholds[current_level]
-        
-        progress = (user.xp - current_level_xp) / (next_level_xp - current_level_xp)
-        return max(0.0, min(1.0, progress))
-        
-    except Exception as e:
-        print(f"Error calculating XP progress: {e}")
-        return 0.0
+@api_view(['POST'])
+def complete_quest(request):
+    fileUpload = request.FILES.get('file')
+    if not fileUpload:
+        return Response({"error": "No file or invalid file"}, status=400)
 
+    currentUser.quest_file_name = fileUpload.name
+    xpGain = random.randint(10,50)
+    
+    currentUser.xp += xpGain
+    last_quest_id = User.objects.order_by('-quest_id').first()
+    currentUser.quest_id = request.data.get('quest_id') if request.data.get('quest_id') else f"quest_{random.randint(1000, 9999)}"
+
+    time.sleep(5)
+    currentUser.quest_completed = True
+    currentUser.save()
+    
+    return Response({
+        "message": "File uploaded successfully",
+        "xp_gain": xpGain,
+        "new_xp": currentUser.xp,
+        "quest_id": currentUser.quest_id
+    })
+    
 def check_skill_unlocks(user):
     """
     Check and unlock new skills based on user level.
