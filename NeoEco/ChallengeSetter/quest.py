@@ -53,28 +53,4 @@ class User:
             for chain_id in quest.chain_ids:
                 self.active_quests.append(chain_id)
 
-SKILL_TREE = [
-    Skill("Daily Challenge Streak Bonus", unlock_level=5),
-    Skill("Double Points Weekend", unlock_level=10),
-    # Add more as needed
-]
 
-# --- Example usage ---
-user = User("eco_player")
-quest1 = Quest("q001", "Become a Transport Ninja 🚆", xp_reward=50)
-user.complete_quest(quest1)
-print(user.xp, user.level, user.rank, user.unlocked_skills)
-
-# Grant XP for streaks, mini-bosses, etc.
-def grant_daily_streak_bonus(user: User):
-    if "Daily Challenge Streak Bonus" in user.unlocked_skills:
-        user.add_xp(20)
-
-# Progress bar — backend can calculate % to next level
-def xp_progress(user: User):
-    current_level_xp = User.LEVELS[user.level - 1]
-    next_level_xp = User.LEVELS[user.level] if user.level < len(User.LEVELS) else User.LEVELS[-1]
-    progress = (user.xp - current_level_xp) / (next_level_xp - current_level_xp)
-    return max(0, min(1, progress))
-
-print("Progress to next level:", xp_progress(user))
