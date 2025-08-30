@@ -1,8 +1,8 @@
-# EcoQuests: The Sustainable Lifestyle Game
+# NeoEco: The Sustainable Lifestyle Game
 
 ## Overview
 
-EcoQuests is a gamified application designed to encourage sustainable living. The platform rewards users with experience points (XP) for completing eco-friendly quests, such as using public transport or participating in volunteer activities. By integrating gamification principles like user profiles, leaderboards, and skill progression, EcoQuests aims to make sustainability an engaging and rewarding experience.
+NeoEco is a gamified application designed to encourage sustainable living. The platform rewards users with experience points (XP) for completing eco-friendly quests, such as using public transport or participating in volunteer activities. By integrating gamification principles like user profiles, leaderboards, and skill progression, NeoEcos aims to make sustainability an engaging and rewarding experience.
 
 ## Features
 
@@ -43,44 +43,18 @@ Make sure you have the following installed:
 1.  **Clone the repository**:
 
     ```bash
-    git clone <repository-url>
-    cd <repository-folder>
+    git clone [<repository-url>](https://github.com/joelkurien/SyncsHack2025.git)
+    cd joelkurien/SyncsHack2025
     ```
 
-2.  **Set up a virtual environment**:
-
-    ```bash
-    python -m venv venv
-    source venv/bin/activate   # On Windows, use `venv\Scripts\activate`
-    ```
-
-3.  **Install dependencies**:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-    *Note: The `requirements.txt` file is not included in the provided code, but you will need to create one by listing the necessary packages like `django`, `djangorestframework`, `requests`, `pandas`, `python-dotenv`, `httpx`, `math`, and `asyncio`.*
-
-4.  **Set up environment variables**:
-    Create a `.env` file in the project's root directory and add your API keys. This is crucial for the application to function correctly.
-
-    ```bash
-    # .env
-    GROQ_API="your_groq_api_key"
-    WEATHER_KEY="your_weatherbit_api_key"
-    TRAFFIC_KEY="your_tomtom_api_key"
-    GROQ_MODEL="your_groq_model"
-    ```
-
-5.  **Run database migrations**:
+2.  **Run database migrations**:
 
     ```bash
     python manage.py makemigrations
     python manage.py migrate
     ```
 
-6.  **Start the development server**:
+3.  **Start the development server**:
 
     ```bash
     python manage.py runserver
@@ -131,7 +105,7 @@ The following are the primary API endpoints available.
 
 ## Contributing
 
-Contributions are welcome\! If you'd like to improve EcoQuests, please follow these steps:
+Contributions are welcome\! If you'd like to improve NeoEco, please follow these steps:
 
 1.  Fork the repository.
 2.  Create a new branch for your feature (`git checkout -b feature/amazing-feature`).
