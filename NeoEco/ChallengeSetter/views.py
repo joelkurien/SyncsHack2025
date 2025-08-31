@@ -113,7 +113,7 @@ def decideTransportOperation(request):
     if result:
         return Response({"decision": result})
     else:
-        return Response({"decision": "take a car"})
+        return Response({"decision": "take a bike"})
 
 async def decideTransportOperationAsync(home, target):
     async with httpx.AsyncClient(timeout=8) as client:
@@ -339,8 +339,6 @@ def complete_quest(request):
 
     currentUser.quest_file_name = "Image File"
     if hasattr(currentUser, "quest_completed"):
-        if currentUser.quest_completed:
-            raise ValueError("Completed task")
         currentUser.quest_completed = True
 
     currentUser.save()
