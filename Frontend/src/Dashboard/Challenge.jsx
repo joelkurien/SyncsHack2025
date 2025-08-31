@@ -36,7 +36,7 @@ const actionDescription = (pretty) => {
     case "Bicycle": return "Bike to work and save some CO₂!";
     case "Bus": return "Take the bus for at least one leg of your commute.";
     case "Train": return "Use the train for your commute today.";
-    case "Take A Car": return "If needed, carpool or combine errands to reduce trips.";
+    case "Take A Bus": return "If needed, carpool or combine errands to reduce trips.";
     default: return `Try to ${pretty.toLowerCase()} to work today.`;
   }
 };
