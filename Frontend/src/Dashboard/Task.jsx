@@ -17,6 +17,8 @@ export default function Task(){
 const fileInputRef = useRef(null);
 const [uploadForId, setUploadForId] = useState(null);
 
+const [isUploaded, setIsUploaded] = useState(false);
+
 const uploadFunction = (id) => {
     setUploadForId(id);
     if (fileInputRef.current) fileInputRef.current.click();
@@ -26,7 +28,7 @@ const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
         console.log("Selected file:", file.name, "for challenge:", uploadForId);
-        // TODO: upload to backend here
+        setIsUploaded(true);
       }
       e.target.value = ""; // reset so selecting the same file again re-triggers change
 };
@@ -61,10 +63,12 @@ const handleFileChange = (e) => {
 
 
             <div>
+            {!isUploaded && (
             <button className="button5"
                 type="button"
                 onClick={() => uploadFunction("current")}
-                >Upload</button>
+            >Upload</button>)}
+
             <button className="button2">Decline</button>
             </div>
 

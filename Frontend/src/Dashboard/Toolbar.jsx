@@ -7,7 +7,7 @@ export default function Toolbar({ onNavigate }){
 
     return (
         <header className="toolbar">
-            <div className="left">Hi, {user}</div>
+            <div className="left">NeoEco</div>
 
             <div className="right">
                 <button onClick={() => onNavigate("friends")}>Friends</button>

@@ -3,27 +3,99 @@ import "./Dashboard.css";
 
 function getSocialChallenges() {
   return [
-    { id: 1, title: "quest11", description: "Hello", isDisplay: false },
-    { id: 2, title: "Recycle Bottles", description: "Try to recycle at least 5 bottles", isDisplay: false },
-    { id: 3, title: "Plant Trees", description: "Try to plant at least 5 trees", isDisplay: false }
+    { id: 1, title: "quest11", description: "Hello", isDisplay: false, isComplete: false },
+    { id: 2, title: "Recycle Bottles", description: "Try to recycle at least 5 bottles", isDisplay: false, isComplete:false },
+    { id: 3, title: "Plant Trees", description: "Try to plant at least 5 trees", isDisplay: false, isComplete:false }
   ];
 }
 
 function getVolunteerChallenges() {
   return [
-    { id: 1, title: "quest21", description: "Hello", isDisplay: false },
-    { id: 2, title: "quest22", description: "Hello", isDisplay: false },
-    { id: 3, title: "quest23", description: "Hello", isDisplay: false }
+    { id: 1, title: "quest21", description:"Hello", isDisplay: false, isComplete:false },
+    { id: 2, title: "quest22", description:"Hello", isDisplay: false, isComplete:false },
+    { id: 3, title: "quest23", description:"Hello", isDisplay: false, isComplete:false }
+
   ];
 }
 
 function getCustomChallenges() {
   return [
-    { id: 1, title: "Clean the Beach", description: "Hello", isDisplay: false },
-    { id: 2, title: "Afforest a sanctuary", description: "Hello", isDisplay: false },
-    { id: 3, title: "Recycle Waste Materials", description: "Hello", isDisplay: false }
+    { id: 1, title: "Clean the Beach", description: "Hello", isDisplay: false, isComplete: false },
+    { id: 2, title: "Afforest a sanctuary", description: "Hello", isDisplay: false, isComplete: false },
+    { id: 3, title: "Recycle Waste Materials", description: "Hello", isDisplay: false, isComplete: false }
   ];
 }
+
+
+
+export default function Challenge(){
+
+
+  useEffect(() => {
+    setSocialChallenges(getSocialChallenges());
+    setVoluntierChallenges(getVoluntierChallenges());
+    setCustomChallenges(getCustomChallenges());
+  }, []);
+
+
+
+  const [socialChallenges, setSocialChallenges] = useState([]);
+  const [voluntierChallenges, setVoluntierChallenges] = useState([]);
+  const [customChallenges, setCustomChallenges] = useState([]);
+
+
+  
+const socialIdFunction = (id) => {
+  setSocialChallenges((prev) =>
+    prev.map((c) =>
+      c.id === id ? { ...c, isDisplay: !c.isDisplay } : c
+    )
+  );
+};
+
+const voluntierIdFunction = (id) => {
+  setVoluntierChallenges((prev) =>
+    prev.map((c) =>
+      c.id === id ? { ...c, isDisplay: !c.isDisplay } : c
+    )
+  );
+};
+
+const customIdFunction = (id) => {
+  setCustomChallenges((prev) =>
+    prev.map((c) =>
+      c.id === id ? { ...c, isDisplay: !c.isDisplay } : c
+    )
+  );
+};
+
+
+
+
+const fileInputRef = useRef(null);
+const [uploadFor, setUploadFor] = useState(null);
+
+const uploadFunction = (type, id) => {
+  setUploadFor({ type, id });
+  if (fileInputRef.current) fileInputRef.current.click();
+};
+
+
+const handleFileChange = (e) => {
+  const file = e.target.files?.[0];
+  if (file && uploadFor) {
+    console.log("Selected file:", file.name, "for", uploadFor.type, "id:", uploadFor.id);
+
+    if (uploadFor.type === "social") {
+      markSocialComplete(uploadFor.id);
+    } else if (uploadFor.type === "voluntier") {
+      markVoluntierComplete(uploadFor.id);
+    } else if (uploadFor.type === "custom") {
+      markCustomComplete(uploadFor.id);
+    }
+  }
+  e.target.value = "";
+    
 
 const toTitle = (s) => {
   const t = String(s || "").trim();
@@ -39,6 +111,7 @@ const actionDescription = (pretty) => {
     case "Take A Car": return "If needed, carpool or combine errands to reduce trips.";
     default: return `Try to ${pretty.toLowerCase()} to work today.`;
   }
+
 };
 
 export default function Challenge() {
@@ -53,6 +126,24 @@ export default function Challenge() {
     setSocialChallenges(getSocialChallenges());
     setVolunteerChallenges(getVolunteerChallenges());
     setCustomChallenges(getCustomChallenges());
+
+  const markSocialComplete = (id) => {
+  setSocialChallenges(prev =>
+    prev.map(c => c.id === id ? { ...c, isComplete: true } : c)
+  );
+};
+
+const markVoluntierComplete = (id) => {
+  setVoluntierChallenges(prev =>
+    prev.map(c => c.id === id ? { ...c, isComplete: true } : c)
+  );
+};
+
+const markCustomComplete = (id) => {
+  setCustomChallenges(prev =>
+    prev.map(c => c.id === id ? { ...c, isComplete: true } : c)
+  );
+};
 
     // Fetch transport recommendation and prepend as a Social quest
     (async () => {
@@ -202,47 +293,105 @@ export default function Challenge() {
                     Completed
                   </button>
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
 
-        <h2>Volunteer Quests</h2>
-        <ul className="sub-challenge">
-          {volunteerChallenges.slice(0, 3).map((c) => (
-            <li className="sub-challenge-selected" key={c.id}>
-              <div className="sub-challenge-heading">
-                <h3>{c.title}</h3>
-                <button className="button3" onClick={() => toggleVolunteer(c.id)}>↴</button>
-              </div>
-              {c.isDisplay && (
-                <div className="sub-challenge-bottom">
-                  <p>Description: {c.description}</p>
-                  <button className="button4">Accept</button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
 
-        <h2>Custom Quests</h2>
-        <ul className="sub-challenge">
-          {customChallenges.slice(0, 3).map((c) => (
-            <li className="sub-challenge-selected" key={c.id}>
-              <div className="sub-challenge-heading">
-                <h3>{c.title}</h3>
-                <button className="button3" onClick={() => toggleCustom(c.id)}>↴</button>
-              </div>
-              {c.isDisplay && (
-                <div className="sub-challenge-bottom">
-                  <p>Description: {c.description}</p>
-                  <button className="button4">Accept</button>
+                  {c.isDisplay && (
+                  <div className="sub-challenge-bottom">
+                      <p>Description: {c.description}</p>
+
+                  {!c.isComplete && (
+                    <button
+                      className="button4"
+                      type="button"
+                      onClick={() => uploadFunction("social", c.id)}
+                    >
+                      Completed
+                    </button>
+                  )}
+
+                  
+                  </div>
+                  )}
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>
-  );
+              ))}
+            </ul>
+
+
+
+            <h2>Volunteer Quests</h2>
+            <ul className="sub-challenge">
+                {voluntierChallenges.slice(0, 3).map((c) => (
+                  <div className="sub-challenge-selected">
+
+
+                  <div className="sub-challenge-heading">
+                  <h3 key={c.id}>{c.title}</h3>               
+                  <button className="button3"
+              onClick={() => voluntierIdFunction(c.id)}
+              >↴</button>
+                </div>
+
+
+                  {c.isDisplay && (
+                  <div className="sub-challenge-bottom">
+                      <p>Description: {c.description}</p>
+
+                    {!c.isComplete && (
+                      <button
+                        className="button4"
+                        type="button"
+                        onClick={() => uploadFunction("voluntier", c.id)}
+                      >
+                        Completed
+                      </button>
+                    )}
+
+                  
+                  </div>
+                  )}
+                </div>
+              ))}
+            </ul>
+
+
+
+
+            <h2>Custom Quests</h2>
+            <ul className="sub-challenge">
+                {customChallenges.slice(0, 3).map((c) => (
+                  <div className="sub-challenge-selected">
+
+
+                  <div className="sub-challenge-heading">
+                  <h3 key={c.id}>{c.title}</h3>               
+                  <button className="button3"
+              onClick={() => customIdFunction(c.id)}
+              >↴</button>
+                </div>
+
+
+                  {c.isDisplay && (
+                  <div className="sub-challenge-bottom">
+                      <p>Description: {c.description}</p>
+
+                  {!c.isComplete && (
+                    <button
+                      className="button4"
+                      type="button"
+                      onClick={() => uploadFunction("custom", c.id)}
+                    >
+                      Accept
+                    </button>
+                  )}
+
+                  
+                  </div>
+                  )}
+                </div>
+              ))}
+            </ul>
+        </div>
+        </>
+    );
+
 }
