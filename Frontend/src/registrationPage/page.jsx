@@ -11,12 +11,32 @@ function Register({ onNavigate }) {
 
 
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    // TODO: Send registration data to backend here
+    try {
+      const response = await fetch("http://localhost:8000/user/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username, password, email, address1, address2,
+        }),
+      });
 
-    if (onNavigate) onNavigate("login");  // ⬅ go back to login page
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Registration successful!");
+        if (onNavigate) onNavigate("login"); // redirect to login
+      } else {
+        alert("Registration failed");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong!");
+    }
   };
 
 

@@ -2,13 +2,17 @@ import random
 import time
 from django.shortcuts import render
 from django.http import HttpResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from django.utils.text import slugify
+from django.core.files.storage import default_storage
+from rest_framework.parsers import MultiPartParser, FormParser
 import requests
 import pandas as pd
 import math
@@ -48,7 +52,7 @@ def register_user(request):
         user = User.objects.create(
             username=username,
             email=email,
-            password=password,  # important: never store raw passwords
+            password=password,  
             address = address,
             work_address = work_address
         )
@@ -60,17 +64,18 @@ def register_user(request):
 
 @api_view(['POST'])
 def user_login(request):
+    global currentUser
     username = request.data.get("username")
     password = request.data.get("password")
     if not username or not password:
         return Response({"error": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
-
+    
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         return Response({"error": "Wrong Username"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if user.check_password(password):
+    if not user.check_password(password):
         return Response({"error": "Wrong Password"}, status=status.HTTP_401_UNAUTHORIZED)
     token, created = Token.objects.get_or_create(user=user)
 
@@ -91,7 +96,7 @@ def user_login(request):
 
 @api_view(['GET'])
 def getUserProfile(request):
-    currentUser = User.objects.get(username  = 'joel12345')
+    print(currentUser)
     return Response({
         "username": currentUser.username,
         "email": currentUser.email,
@@ -322,31 +327,31 @@ def search_opportunities(location=None):
 def grant_daily_streak_bonus(user):
     pass
 
+
 @api_view(['POST'])
 def complete_quest(request):
-    fileUpload = request.FILES.get('file')
-    if not fileUpload:
-        return Response({"error": "No file or invalid file"}, status=400)
 
-    currentUser.quest_file_name = fileUpload.name
-    xpGain = random.randint(10,50)
-    
-    currentUser.xp += xpGain
-    last_quest_id = User.objects.order_by('-quest_id').first()
-    currentUser.quest_id = request.data.get('quest_id') if request.data.get('quest_id') else f"quest_{random.randint(1000, 9999)}"
+    xp_gain = random.randint(10, 50)
+    currentUser.xp += xp_gain
 
-    time.sleep(5)
-    currentUser.quest_completed = True
-    
+    provided_qid = request.data.get('quest_id')
+    currentUser.quest_id = provided_qid if provided_qid else f"quest_{random.randint(1000, 9999)}"
+
+    currentUser.quest_file_name = "Image File"
+    if hasattr(currentUser, "quest_completed"):
+        if currentUser.quest_completed:
+            raise ValueError("Completed task")
+        currentUser.quest_completed = True
+
     currentUser.save()
-    
+
     return Response({
         "message": "File uploaded successfully",
-        "xp_gain": xpGain,
+        "xp_gain": xp_gain,
         "new_xp": currentUser.xp,
         "quest_id": currentUser.quest_id
-    })
-    
+    }, status=status.HTTP_201_CREATED)
+
 def check_skill_unlocks(user):
     """
     Check and unlock new skills based on user level.
